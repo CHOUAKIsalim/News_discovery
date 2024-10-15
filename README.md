@@ -16,6 +16,9 @@ This directory contains two CSV files:
 - 'All_discovered_pages.csv': Complete list of discovered U.S.-based self-proclaimed news providers pages.
 - 'Analyzed_pages.csv':  List of analyzed discovered U.S.-based self-proclaimed news providers pages (those detected at least 5 times).
 
+This directory also includes a subdirectory named dataset_per_country, which contains a CSV file for each crawled country. Each CSV file lists the self-proclaimed news provider pages identified in that specific country.
+
+
 ## 3. Relevancy analysis directory
 This directory contains randomly sampled discovered pages that underwent manual inspection to evaluate their relevancy.
 
