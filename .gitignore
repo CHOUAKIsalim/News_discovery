@@ -1,1 +1,4 @@
 .env
+pages_discovery/data/daily_news_csv/US/*
+__pycache__/
+pages_discovery/logs/*
