@@ -2,6 +2,7 @@ import logging, uuid, sys, time
 import pandas as pd
 from os import path
 from datetime import datetime, timedelta
+import argparse
 
 from params import ERROR_TYPES, DIR_DAILY_NEWS
 from crawling_scripts.headlines_extraction import get_daily_articles, extract_keywords
@@ -55,7 +56,7 @@ def gather_daily_news(lang, country, start_date):
     return df_news
 
 
-def searching_posts(df_news, start_date):
+def searching_posts(df_news, country, start_date, platform):
 
     if df_news.shape[0] == 0:
         print("No news headline on ", start_date)
@@ -67,13 +68,13 @@ def searching_posts(df_news, start_date):
     save_search_terms(df_searchterms, start_date)
 
     dct_searchterm = df_searchterms.to_dict('records')
-    search_posts_for_all_keywords(dct_searchterm, start_date, country)
+    search_posts_for_all_keywords(dct_searchterm, start_date, country, platform)
 
 
 
-def daily_job(lang, country, start_date):
+def daily_job(lang, country, start_date, platform):
     df_news = gather_daily_news(lang, country, start_date)
-    searching_posts(df_news, start_date)
+    searching_posts(df_news, country, start_date, platform)
 
 
 
@@ -82,22 +83,21 @@ if __name__ == "__main__":
 
     logger = set_logger()
 
-    try:
-        lang = sys.argv[1]
-        country = sys.argv[2]
-    except:
-        lang = "en"
-        country = "US"
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--lang', type=str, default='en', help='Language of the news')
+    parser.add_argument('--country', type=str, default='US', help='Country of the news')
+    parser.add_argument('--start_date', type=str, default=(datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d'), help='Start date for the news in YYYY-MM-DD format')
+    parser.add_argument('--nb_days', type=int, default=1, help='Number of days to gather news for')
+    parser.add_argument('--platform', type=str, default='facebook', help='Platform to search posts on (e.g., facebook, tiktok)')
 
-    try:
-        start_date = sys.argv[3]
-        nb_days = int(sys.argv[4])
-        DAILY = False
+    args = parser.parse_args()
 
-    except: 
-        start_date = (datetime.today() - timedelta(days = 1)).strftime('%Y-%m-%d')
-        nb_days = 1
-        DAILY = True
+    lang = args.lang
+    country = args.country
+    start_date = args.start_date
+    nb_days = args.nb_days
+    platform = args.platform
+    DAILY = (nb_days == 1) and (start_date == (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d'))
  
 
     for _ in range(nb_days):
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         print()
         print("NEW DAY:", start_date)
     
-        daily_job(lang, country, start_date)
+        daily_job(lang, country, start_date, platform)
         start_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
 
  

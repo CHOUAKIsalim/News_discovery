@@ -6,7 +6,6 @@ from params import CROWDTANGLE_TOKEN, ERROR_TYPES, TIME_DELAY_CROWDTANGLE, DIR_K
 from database_scripts.utils import COLSET_CT_POST
 from database_scripts.save_posts import save_posts
 
-
 ########################################################################
 
 def get_keywords_to_search(df_news):
@@ -122,7 +121,7 @@ def search_term_endpoint(token, terms, startDate, endDate=None, count=100, offse
     url += '&sortBy=date'
     return url
 
-def search_posts_for_keyword(token,term,time_beg,time_end):
+def search_posts_for_keyword_crowdtangle(token,term,time_beg,time_end):
     
     api_url = search_term_endpoint(token=token,terms=term,startDate=time_beg,endDate=time_end,count=100)
     resp_text,exec_time = call_api(api_url)    
@@ -159,7 +158,18 @@ def search_posts_for_keyword(token,term,time_beg,time_end):
 
     return all_posts
 
-def search_posts_for_all_keywords(dct_searchterm, start_date, country):
+def search_posts_for_keyword_tiktok(token,term,time_beg,time_end):
+    print('Tiktok search not implemented yet')
+    import sys
+    sys.exit(1)
+
+
+PLATFORMS = {
+    "facebook": search_posts_for_keyword_crowdtangle,
+    "tiktok": search_posts_for_keyword_tiktok
+}
+
+def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform):
 
     start_date_datetime = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = (start_date_datetime + timedelta(days=1)).strftime('%Y-%m-%d')
@@ -172,7 +182,7 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country):
     posts_to_store = []
 
     for item in dct_searchterm:
-        posts = search_posts_for_keyword(CROWDTANGLE_TOKEN, item['keyword'], start_date, end_date)
+        posts = PLATFORMS[platform](CROWDTANGLE_TOKEN, item['keyword'], start_date, end_date)
         item['posts'] = posts
         item['nb_posts'] = len(posts)
         start_time = time.time()
