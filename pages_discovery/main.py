@@ -22,7 +22,7 @@ def set_logger():
     return logging.getLogger(__name__)
 
 
-def gather_daily_news(lang, country, start_date):
+def gather_daily_news(lang, country, start_date, logger):
 
     df_news = pd.DataFrame()
 
@@ -56,25 +56,25 @@ def gather_daily_news(lang, country, start_date):
     return df_news
 
 
-def searching_posts(df_news, country, start_date, platform):
+def searching_posts(df_news, country, start_date, platform, logger):
 
     if df_news.shape[0] == 0:
-        print("No news headline on ", start_date)
+        logger.info("No news headline on ", start_date)
         return
 
     df_searchterms = get_keywords_to_search(df_news)
 
     ## Save search terms to DB
-    save_search_terms(df_searchterms, start_date)
+    save_search_terms(df_searchterms, start_date, logger)
 
     dct_searchterm = df_searchterms.to_dict('records')
-    search_posts_for_all_keywords(dct_searchterm, start_date, country, platform)
+    search_posts_for_all_keywords(dct_searchterm, start_date, country, platform, logger)
 
 
 
-def daily_job(lang, country, start_date, platform):
-    df_news = gather_daily_news(lang, country, start_date)
-    searching_posts(df_news, country, start_date, platform)
+def daily_job(lang, country, start_date, platform, logger):
+    df_news = gather_daily_news(lang, country, start_date, logger)
+    searching_posts(df_news, country, start_date, platform, logger)
 
 
 
@@ -102,11 +102,9 @@ if __name__ == "__main__":
 
     for _ in range(nb_days):
 
-        print()
-        print()
-        print("NEW DAY:", start_date)
+        logger.info(f"NEW DAY: {start_date}")
     
-        daily_job(lang, country, start_date, platform)
+        daily_job(lang, country, start_date, platform, logger)
         start_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
 
  

@@ -2,7 +2,7 @@
 from .utils import create_engine, TBL_KEYWORD
 from datetime import datetime
 
-def save_search_terms(df_searchterms, start_date):
+def save_search_terms(df_searchterms, start_date, logger):
 
     try:
         database_connection = create_engine()
@@ -13,5 +13,5 @@ def save_search_terms(df_searchterms, start_date):
         database_connection.close()
 
     except Exception as e:
-        print(e)
+        logger.error(f'Exception occured in save_search_terms: {e}')
 

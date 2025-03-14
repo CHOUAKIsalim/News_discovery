@@ -10,7 +10,7 @@ CROWDTANGLE_TOKEN = os.getenv("CROWDTANGLE_TOKEN")
 
 DIR_KEYWORD_POSTS = {
     "France": 'data/keyword_posts_csv/France',
-    "US": 'data/keyword_posts_csv/S'
+    "US": 'data/keyword_posts_csv/US'
 
 }
 

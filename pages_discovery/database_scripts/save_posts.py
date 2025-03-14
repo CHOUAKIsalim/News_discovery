@@ -2,7 +2,7 @@
 from .utils import create_engine, TBL_CT_POST
 
 
-def save_posts(posts_df):
+def save_posts(posts_df, logger):
     try:
         ignore_types = ['live_video_scheduled']
         posts_df = posts_df[~posts_df['type'].isin(ignore_types)]
@@ -12,4 +12,4 @@ def save_posts(posts_df):
                 if_exists='append',index=True, index_label=['platformId','hashed_term'])
         database_connection.close()
     except Exception as e:
-        print(e)
+        logger.error(f'Exception occured in save_posts: {e}')
