@@ -3,7 +3,7 @@ import pandas as pd
 from os import path
 from datetime import datetime,timedelta
 from params import CROWDTANGLE_TOKEN, ERROR_TYPES, TIME_DELAY_CROWDTANGLE, DIR_KEYWORD_POSTS
-from database_scripts.utils import COLSET_CT_POST
+from database_scripts.utils import COLSET_CT_POST, COLSET_TIKTOK_POST
 from database_scripts.save_posts import save_posts
 import os
 import re
@@ -48,7 +48,7 @@ def get_leaves(item, key=None, key_prefix=""):
     else:
         return {key_prefix: item}
 
-def format_posts(item, logger):
+def format_posts(item, post_formatting, logger):
 
     try:
         if 'posts' in item:
@@ -60,7 +60,7 @@ def format_posts(item, logger):
 
             for post in posts:
                 cols = set(post.keys())
-                missing_cols = COLSET_CT_POST.difference(cols)
+                missing_cols = post_formatting.difference(cols)
                 for c in missing_cols:
                     post[c] = ''
 
@@ -184,7 +184,7 @@ def query_tiktok_api(url, params, headers, data, retry_count, logger):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as http_err:
-        while retry_count>0 and http_err.response.status_code != 500:
+        while retry_count>0:
             logger.error(f'HTTP error occurred: {http_err}')
             if http_err.response.status_code == 429:
                 logger.error('Rate limit exceeded. Waiting for 1 minute before the next query.')
@@ -249,8 +249,14 @@ def search_posts_for_keyword_tiktok(term,start_date,country,logger):
     return all_posts
 
 PLATFORMS = {
-    "facebook": search_posts_for_keyword_crowdtangle,
-    "tiktok": search_posts_for_keyword_tiktok
+    "facebook": {
+        "search_posts": search_posts_for_keyword_crowdtangle, 
+        "post_formatting": COLSET_CT_POST,
+        },
+    "tiktok": {
+        "search_posts": search_posts_for_keyword_tiktok, 
+        "post_formatting": COLSET_TIKTOK_POST,
+        },
 }
 
 def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform, logger):
@@ -258,12 +264,12 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
     posts_to_store = []
 
     for item in dct_searchterm:
-        posts = PLATFORMS[platform](item['keyword'], start_date, country, logger)
+        posts = PLATFORMS[platform]['search_posts'](item['keyword'], start_date, country, logger)
         item['posts'] = posts
         item['nb_posts'] = len(posts)
         start_time = time.time()
-        posts_to_store.extend(format_posts(item, logger))
-        save_keyword_posts_csv(item, country, logger)
+        posts_to_store.extend(format_posts(item, PLATFORMS[platform]['post_formatting'], logger))
+        save_keyword_posts_csv(item, country, platform, logger)
         exe_time = time.time() - start_time
         if platform == "facebook":
             time.sleep(TIME_DELAY_CROWDTANGLE - exe_time)
@@ -279,8 +285,8 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
         save_posts(pd.DataFrame(posts_to_store), logger)
 
 
-def save_keyword_posts_csv(item, country, logger):
-    posts = format_posts(item, logger)
+def save_keyword_posts_csv(item, country, platform, logger):
+    posts = format_posts(item, PLATFORMS[platform]['post_formatting'], logger)
     if len(posts) == 0:
         return 
     filename = path.join(DIR_KEYWORD_POSTS[country],item['hashed_keyword']+".csv")
