@@ -1,4 +1,5 @@
+__pycache__/
 .env
 pages_discovery/data/*
-__pycache__/
 pages_discovery/logs/*
+Data/ads_txt
