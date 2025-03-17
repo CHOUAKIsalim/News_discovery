@@ -96,16 +96,14 @@ if __name__ == "__main__":
     country = args.country
     start_date = args.start_date
     nb_days = args.nb_days
-    platform = args.platform
-    DAILY = (nb_days == 1) and (start_date == (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d'))
- 
+    platform = args.platform 
 
     for _ in range(nb_days):
 
         logger.info(f"NEW DAY: {start_date}")
     
         daily_job(lang, country, start_date, platform, logger)
-        start_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        start_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=-7)).strftime("%Y-%m-%d")
 
  
 

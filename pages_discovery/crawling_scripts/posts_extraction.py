@@ -134,7 +134,7 @@ def search_posts_for_keyword_crowdtangle(term,start_date,country,logger):
     logger.info(f'Searching posts from {start_date} to {end_date}')
     
     api_url = search_term_endpoint(token=token,terms=term,startDate=start_date,endDate=end_date,count=100)
-    resp_text,exec_time = call_api(api_url)    
+    resp_text,exec_time = call_api(api_url, logger)    
     time_delay = 30
     pcount = 0
     jsondata = json.loads(resp_text)
