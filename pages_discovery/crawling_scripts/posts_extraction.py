@@ -277,12 +277,12 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
 
         if len(posts_to_store) >= 400: #Save sublists of posts
             logger.info("Saving posts")
-            save_posts(pd.DataFrame(posts_to_store), logger)
+            save_posts(pd.DataFrame(posts_to_store), platform, logger)
             posts_to_store = []
 
 
     if len(posts_to_store) > 0: ## Save remaining posts
-        save_posts(pd.DataFrame(posts_to_store), logger)
+        save_posts(pd.DataFrame(posts_to_store), platform, logger)
 
 
 def save_keyword_posts_csv(item, country, platform, logger):

@@ -17,6 +17,7 @@ DB_NAME = os.getenv("DB_NAME")
 
 TBL_NEWS_HEADLINE = 'gl_daily_news'
 TBL_CT_POST = 'ct_found_post'
+TBL_TIKTOK_POST = 'tiktok_found_post'
 TBL_KEYWORD = 'search_term'
 
 
