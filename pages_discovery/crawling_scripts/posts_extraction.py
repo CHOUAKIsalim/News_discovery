@@ -5,8 +5,10 @@ from datetime import datetime,timedelta
 from params import CROWDTANGLE_TOKEN, ERROR_TYPES, TIME_DELAY_CROWDTANGLE, DIR_KEYWORD_POSTS
 from database_scripts.utils import COLSET_CT_POST, COLSET_TIKTOK_POST
 from database_scripts.save_posts import save_posts
+from crawling_scripts.utils import attribute_posts_to_keywords
 import os
 import re
+import numpy as np
 
 ########################################################################
 
@@ -122,9 +124,8 @@ def search_term_endpoint(token, terms, startDate, endDate=None, count=100, offse
     url += '&sortBy=date'
     return url
 
-def search_posts_for_keyword_crowdtangle(term,start_date,country,logger):
-    token = CROWDTANGLE_TOKEN
-
+def search_posts_for_keyword_crowdtangle(term,start_date,country,token,logger):
+    
     start_date_datetime = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = (start_date_datetime + timedelta(days=1)).strftime('%Y-%m-%d')
 
@@ -168,7 +169,7 @@ def search_posts_for_keyword_crowdtangle(term,start_date,country,logger):
 
     return all_posts
 
-def get_access_token():
+def get_tiktok_access_token():
     """Get access token using client key and secret."""
     response = os.popen(f"curl --location --request POST 'https://open.tiktokapis.com/v2/oauth/token/' --header 'Content-Type: application/x-www-form-urlencoded' --header 'Cache-Control: no-cache' --data-urlencode 'client_key={os.environ['TIKTOK_CLIENT_KEY']}' --data-urlencode 'client_secret={os.environ['TIKTOK_CLIENT_SECRET']}' --data-urlencode 'grant_type=client_credentials'").read()
     pattern = r'"access_token":"([^"]+)"'
@@ -197,8 +198,7 @@ def query_tiktok_api(url, params, headers, data, retry_count, logger):
         return response
 
 
-def search_posts_for_keyword_tiktok(term,start_date,country,logger):
-    token = get_access_token()
+def search_posts_for_keyword_tiktok(terms,start_date,country,token,logger):
 
     url = 'https://open.tiktokapis.com/v2/research/video/query/'
     params = {
@@ -209,14 +209,15 @@ def search_posts_for_keyword_tiktok(term,start_date,country,logger):
         'Content-Type': 'application/json'
     }
 
+    search_date = datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y%m%d')
+
     query = {
         'and': [
-            {'operation': 'IN', 'field_name': 'keyword', 'field_values': [term]},
+            {'operation': 'IN', 'field_name': 'keyword', 'field_values': terms},
             {'operation': 'IN', 'field_name': 'region_code', 'field_values': [country]}
         ]
     }
-
-    search_date = datetime.strptime(start_date, '%Y-%m-%d').strftime('%Y%m%d')
+    
     payload = {
         'query': query,
         'start_date': search_date,
@@ -240,12 +241,12 @@ def search_posts_for_keyword_tiktok(term,start_date,country,logger):
             logger.info(f"Amount of data collected: {len(json_response['data']['videos'])}")
         except Exception as e:
             logger.info(f'An error occured while subscripting json_response: {e}. The response is {json_response}')
-
+            logger.info(f'Payload: {payload}')
         if has_more:
             cursor = json_response['data']['cursor']
             search_id = json_response['data']['search_id']
         
-    logger.info(f"Total amount of data collected for keyword {term}: {len(all_posts)}")
+    logger.info(f"Total amount of data collected for this batch of keywords: {len(all_posts)}")
     return all_posts
 
 PLATFORMS = {
@@ -263,22 +264,51 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
 
     posts_to_store = []
 
-    for item in dct_searchterm:
-        posts = PLATFORMS[platform]['search_posts'](item['keyword'], start_date, country, logger)
-        item['posts'] = posts
-        item['nb_posts'] = len(posts)
-        start_time = time.time()
-        posts_to_store.extend(format_posts(item, PLATFORMS[platform]['post_formatting'], logger))
-        save_keyword_posts_csv(item, country, platform, logger)
-        exe_time = time.time() - start_time
-        if platform == "facebook":
-            time.sleep(TIME_DELAY_CROWDTANGLE - exe_time)
+    if platform == "tiktok":
+        keywords_list = [item['keyword'] for item in dct_searchterm if item['keyword'] is not np.nan]
+        token = get_tiktok_access_token()
+        posts_to_keywords = {} 
+
+        batch_size = 20
+        posts = []
+        for offset in range(0, len(keywords_list), batch_size):
+            batch_keywords = keywords_list[offset:offset + batch_size]
+            posts = search_posts_for_keyword_tiktok(batch_keywords, start_date, country, token, logger)
+            posts_to_keywords = attribute_posts_to_keywords(posts_to_keywords, posts, batch_keywords, logger)
+
+            for item in dct_searchterm[offset:offset + batch_size]:
+                if item['keyword'] not in posts_to_keywords:
+                    continue
+                item['posts'] = [posts[i] for i in posts_to_keywords[item['keyword']]]
+                item['nb_posts'] = len(item['posts'])
+                start_time = time.time()
+                posts_to_store.extend(format_posts(item, PLATFORMS[platform]['post_formatting'], logger))
+                save_keyword_posts_csv(item, country, platform, logger)
+                exe_time = time.time() - start_time
+
+                if len(posts_to_store) >= 400: #Save sublists of posts
+                    logger.info("Saving posts")
+                    save_posts(pd.DataFrame(posts_to_store), platform, logger)
+                    posts_to_store = []
+
+    elif platform == "facebook":
+        for item in dct_searchterm:
+            token = CROWDTANGLE_TOKEN
+            posts = search_posts_for_keyword_crowdtangle(item['keyword'], start_date, country, token, logger)
+            item['posts'] = posts
+            item['nb_posts'] = len(posts)
+            start_time = time.time()
+            posts_to_store.extend(format_posts(item, PLATFORMS[platform]['post_formatting'], logger))
+            save_keyword_posts_csv(item, country, platform, logger)
+            exe_time = time.time() - start_time
+            if platform == "facebook":
+                time.sleep(TIME_DELAY_CROWDTANGLE - exe_time)
 
 
-        if len(posts_to_store) >= 400: #Save sublists of posts
-            logger.info("Saving posts")
-            save_posts(pd.DataFrame(posts_to_store), platform, logger)
-            posts_to_store = []
+            if len(posts_to_store) >= 400: #Save sublists of posts
+                logger.info("Saving posts")
+                save_posts(pd.DataFrame(posts_to_store), platform, logger)
+                posts_to_store = []
 
 
     if len(posts_to_store) > 0: ## Save remaining posts

@@ -10,13 +10,14 @@ CROWDTANGLE_TOKEN = os.getenv("CROWDTANGLE_TOKEN")
 
 DIR_KEYWORD_POSTS = {
     "France": 'data/keyword_posts_csv/France',
-    "US": 'data/keyword_posts_csv/US'
-
+    "US": 'data/keyword_posts_csv/US',
+    "RO": 'data/keyword_posts_csv/RO'
 }
 
 DIR_DAILY_NEWS = { 
-    "France": 'data//daily_news_csv/France',
-    "US": "data/daily_news_csv/US"
+    'France': 'data//daily_news_csv/France',
+    'US': 'data/daily_news_csv/US',
+    'RO': 'data/daily_news_csv/RO'
 }
 MAIN_LOG_FILE = 'logs/error.log'
 

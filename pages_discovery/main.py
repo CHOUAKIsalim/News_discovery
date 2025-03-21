@@ -24,6 +24,11 @@ def set_logger():
 
 def gather_daily_news(lang, country, start_date, logger):
 
+    filename = "headlines_{}.csv".format(start_date)
+    if path.exists(path.join(DIR_DAILY_NEWS[country],filename)):
+        logger.info("News for {} already gathered".format(start_date))
+        return pd.read_csv(path.join(DIR_DAILY_NEWS[country],filename))
+
     df_news = pd.DataFrame()
 
     try:
@@ -41,17 +46,17 @@ def gather_daily_news(lang, country, start_date, logger):
     except Exception as e:
         logger.error("{}: {}".format(ERROR_TYPES.KEYWORD_EXTRACT,str(e)))
 
-    try:
-#        df_news['uuid'] = [str(uuid.uuid4()) for _ in range(len(df_news.index))]
-        filename = "headlines_{}.csv".format(start_date)
-        df_news.to_csv(path.join(DIR_DAILY_NEWS[country],filename),index=None)
+    #try:
+    # df_news['uuid'] = [str(uuid.uuid4()) for _ in range(len(df_news.index))]
+    filename = "headlines_{}.csv".format(start_date)
+    df_news.to_csv(path.join(DIR_DAILY_NEWS[country],filename),index=None)
 
-        ## Save daily_news to DB
-        save_news_headlines(df_news)
+    ## Save daily_news to DB
+    save_news_headlines(df_news)
 
-    except Exception as e:
-        print(str(e))
-        logger.error("{}: {}".format(ERROR_TYPES.DB_OPERATION,str(e)))
+    # except Exception as e:
+    #     print(str(e))
+    #     logger.error("{}: {}".format(ERROR_TYPES.DB_OPERATION,str(e)))
 
     return df_news
 
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--lang', type=str, default='en', help='Language of the news')
     parser.add_argument('--country', type=str, default='US', help='Country of the news')
-    parser.add_argument('--start_date', type=str, default=(datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d'), help='Start date for the news in YYYY-MM-DD format')
+    parser.add_argument('--start_date', type=str, default=(datetime.today() - timedelta(days=7)).strftime('%Y-%m-%d'), help='Start date for the news in YYYY-MM-DD format')
     parser.add_argument('--nb_days', type=int, default=1, help='Number of days to gather news for')
     parser.add_argument('--platform', type=str, default='facebook', help='Platform to search posts on (e.g., facebook, tiktok)')
 
@@ -99,11 +104,12 @@ if __name__ == "__main__":
     platform = args.platform 
 
     for _ in range(nb_days):
-
+        
         logger.info(f"NEW DAY: {start_date}")
     
         daily_job(lang, country, start_date, platform, logger)
-        start_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=-7)).strftime("%Y-%m-%d")
+        start_date = (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        
 
  
 

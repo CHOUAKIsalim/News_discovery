@@ -8,12 +8,11 @@ from pathlib import Path
 load_dotenv(find_dotenv())
 
 
-DRIVER_NAME = os.getenv("DB_DRIVER")
+#DRIVER_NAME = os.getenv("DB_DRIVER")
 USER_NAME = os.getenv("DB_USER_NAME")
 PASSWORD = os.getenv("DB_PASSWORD")
 HOST_NAME = os.getenv("DB_HOSTNAME")
 DB_NAME = os.getenv("DB_NAME")
-
 
 TBL_NEWS_HEADLINE = 'gl_daily_news'
 TBL_CT_POST = 'ct_found_post'
@@ -26,10 +25,10 @@ COLSET_TIKTOK_POST = set(['id','create_time','username','region_code','video_des
 
 
 def create_engine():
-    connection = sqlalchemy.create_engine('mysql+pymysql://{0}:{1}@{2}/{3}?charset=utf8mb4'.
-                                               format(USER_NAME, PASSWORD, 
-                                                      HOST_NAME, DB_NAME)).connect()
+    connection = sqlalchemy.create_engine(f'mysql+pymysql://{USER_NAME}:{PASSWORD}@{HOST_NAME}/{DB_NAME}?charset=utf8mb4').connect()
+    #connection = sqlalchemy.create_engine('sqlite:////home/benzenoug/News_discovery/pages_discovery/data/news_collection.db').connect()
     return connection
+
 
 
 def exec_cmd(sql_cmd):
