@@ -4,7 +4,11 @@ from gnews import GNews
 from hashlib import sha256
 import yake
 from cleantext.clean import fix_strange_quotes, normalize_whitespace, replace_urls, remove_emoji, clean
-
+import fasttext
+import fasttext.util
+from adaptkeybert import KeyBERT
+import os
+from params import STOP_WORDS_FILE, DIR_KW_FASTTEXT
 
 def remove_source(title):
     ind = title.rfind('-')
@@ -60,6 +64,20 @@ def get_daily_articles(lang, country, start_date, period='1d'):
 
 ###########################################################################
 
+def get_kw_extractor(extractor,lang='ro'):
+    if extractor == 'yake':
+        return None
+    elif extractor == 'keybert':
+        model = KeyBERT()
+        return model
+    elif extractor == 'fasttext':
+        fasttext.FastText.eprint = lambda *args,**kwargs: None
+        if lang == 'ro':
+            model = fasttext.load_model(DIR_KW_FASTTEXT + 'cc.ro.300.bin')
+        else:
+            model = fasttext.load_model(dir + 'cc.en.300.bin')
+        return model
+
 def word_count(text):
     return len(text.split(' '))
 
@@ -72,19 +90,30 @@ def get_clean_text(strs):
     return remove_emoji(cl_text)
 
 
-def get_keywords(text,N=4):
+def get_keywords(text,extractor='yake',kw_model=None,n_gram=5,top_n=4):
     ctext = get_clean_text(text)
-    kw_extractor = yake.KeywordExtractor(top=N, stopwords=None)
-    keywords = kw_extractor.extract_keywords(ctext)
+    with open(STOP_WORDS_FILE, 'r') as f:
+        stop_words = f.read().splitlines()
+    if extractor == 'yake':
+        kw_extractor = yake.KeywordExtractor(top=top_n, n=n_gram, stopwords=stop_words)
+        keywords = kw_extractor.extract_keywords(ctext)
+    elif extractor == 'keybert':
+        keywords = kw_model.extract_keywords(ctext, top_n=top_n, keyphrase_ngram_range=(1,n_gram), stop_words=stop_words) # TODO: finetune the model on romanian news and keywords
+    elif extractor == 'fasttext':
+        text_vector = kw_model.get_sentence_vector(ctext)  # Average word vectors to get text vector
+        words = ctext.split()
+        ngrams = [' '.join(words[i:i + n_gram]) for i in range(len(words) - n_gram + 1)]
+        ngram_vectors = [sum([kw_model.get_word_vector(word) for word in ngram.split() if word not in stop_words]) / len(ngram.split()) for ngram in ngrams]
+        similarities = [sum(text_vector * ngram_vector) for ngram_vector in ngram_vectors]
+        best_ngrams = sorted(zip(ngrams, similarities), key=lambda x: x[1], reverse=True)[:top_n]
+        keywords = best_ngrams
     fl_keywords = sorted(keywords,key=lambda x:x[1], reverse=True)
     ls_keywords = [kw[0] for kw in fl_keywords]
-    return list(filter(lambda w: word_count(w)>=2, ls_keywords))
+    return ls_keywords
 
-
-def get_article_keyword(title):
-
+def get_article_keyword(title, extractor='yake',model=None):
     try:
-        keywords = get_keywords(title)
+        keywords = get_keywords(title, extractor=extractor, kw_model=model)
         filtered_kw = list(filter(lambda w: word_count(w)>=2, keywords))
         return ",".join(filtered_kw)
     except Exception as e:
@@ -101,9 +130,9 @@ def get_keyword_at(keywords, ind = 0):
     
 
 
-def extract_keywords(df_news):
+def extract_keywords(df_news, extractor='yake', model=None):
 
-    df_news['keywords'] = df_news.title.apply(get_article_keyword)
+    df_news['keywords'] = df_news.title.apply(lambda x:get_article_keyword(x, extractor=extractor, model=model))
     df_news['first_keyword'] = df_news.keywords.apply(lambda x:get_keyword_at(x,0))
     df_news['second_keyword'] = df_news.keywords.apply(lambda x:get_keyword_at(x,1))
     df_news['hashed_first_kw'] = df_news.first_keyword.apply(lambda x: get_hash_string(x))

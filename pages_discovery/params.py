@@ -14,6 +14,12 @@ DIR_KEYWORD_POSTS = {
     "RO": 'data/keyword_posts_csv/RO'
 }
 
+STOP_WORDS_FILE = os.getenv("STOP_WORDS_FILE")
+
+DIR_KW_FASTTEXT = os.getenv("DIR_KW_FASTTEXT")
+
+XBOGUS_JS_FILE = os.getenv("XBOGUS_JS_FILE")
+
 DIR_DAILY_NEWS = { 
     'France': 'data//daily_news_csv/France',
     'US': 'data/daily_news_csv/US',

@@ -6,3 +6,5 @@ pages_discovery/models/*
 keywords.json
 experiments.ipynb
 Data/ads_txt
+logs/error.log
+keywords_*.json

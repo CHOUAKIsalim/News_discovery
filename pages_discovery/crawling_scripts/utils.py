@@ -1,19 +1,20 @@
 import fasttext
 import fasttext.util
 from sklearn.metrics.pairwise import cosine_similarity
+from params import DIR_KW_FASTTEXT
 
 def get_bert_embedding(input_text_list):
     fasttext.FastText.eprint = lambda *args,**kwargs: None
-    model = fasttext.load_model('./models/fast_text/cc.ro.300.bin')
+    model = fasttext.load_model(DIR_KW_FASTTEXT+'cc.ro.300.bin')
 
     embeddings = []
     # Get BERT embeddings
     for text in input_text_list:
-        embeddings.append(model.get_sentence_vector(text))
-        
+        embeddings.append(model.get_sentence_vector(text.replace('\n', ' ')))
     return embeddings
 
-def attribute_posts_to_keywords(posts_to_keywords, posts, keywords, logger):
+def attribute_posts_to_keywords(posts, keywords, logger):
+    posts_to_keywords = {}
     logger.info("Embedding posts descriptions...")
     posts_embeddings = get_bert_embedding([post['video_description'] for post in posts])
     logger.info("Embedding posts keywords...")

@@ -267,14 +267,17 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
     if platform == "tiktok":
         keywords_list = [item['keyword'] for item in dct_searchterm if item['keyword'] is not np.nan]
         token = get_tiktok_access_token()
-        posts_to_keywords = {} 
 
         batch_size = 20
         posts = []
         for offset in range(0, len(keywords_list), batch_size):
             batch_keywords = keywords_list[offset:offset + batch_size]
+            logger.info(f"Searching posts for keywords: {batch_keywords}")
             posts = search_posts_for_keyword_tiktok(batch_keywords, start_date, country, token, logger)
-            posts_to_keywords = attribute_posts_to_keywords(posts_to_keywords, posts, batch_keywords, logger)
+            if len(posts) == 0:
+                logger.info(f"No posts found for keywords: {batch_keywords}")
+                continue
+            posts_to_keywords = attribute_posts_to_keywords(posts, batch_keywords, logger)
 
             for item in dct_searchterm[offset:offset + batch_size]:
                 if item['keyword'] not in posts_to_keywords:
@@ -287,7 +290,7 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
                 exe_time = time.time() - start_time
 
                 if len(posts_to_store) >= 400: #Save sublists of posts
-                    logger.info("Saving posts")
+                    logger.info("Saving posts to SQL database")
                     save_posts(pd.DataFrame(posts_to_store), platform, logger)
                     posts_to_store = []
 
@@ -306,7 +309,7 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
 
 
             if len(posts_to_store) >= 400: #Save sublists of posts
-                logger.info("Saving posts")
+                logger.info("Saving posts to SQL database")
                 save_posts(pd.DataFrame(posts_to_store), platform, logger)
                 posts_to_store = []
 
@@ -320,7 +323,7 @@ def save_keyword_posts_csv(item, country, platform, logger):
     if len(posts) == 0:
         return 
     filename = path.join(DIR_KEYWORD_POSTS[country],item['hashed_keyword']+".csv")
-    logger.info(f"Saving to {filename}...")
+    logger.info(f"Saving {len(posts)} posts for keyword {item['keyword']} to {filename}...")
     df = pd.DataFrame(posts)
     df.to_csv(filename,index=None)
     logger.info("Saved!")
