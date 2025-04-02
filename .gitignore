@@ -1,1 +1,9 @@
+__pycache__/
 .env
+pages_discovery/data/*
+pages_discovery/logs/*
+pages_discovery/models/*
+keywords.json
+experiments.ipynb
+Data/ads_txt
+keywords_*.json

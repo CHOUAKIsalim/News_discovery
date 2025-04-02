@@ -10,13 +10,23 @@ CROWDTANGLE_TOKEN = os.getenv("CROWDTANGLE_TOKEN")
 
 DIR_KEYWORD_POSTS = {
     "France": 'data/keyword_posts_csv/France',
-    "US": 'data/keyword_posts_csv/S'
-
+    "US": 'data/keyword_posts_csv/US',
+    "RO": 'data/keyword_posts_csv/RO'
 }
 
+STOP_WORDS_FILE = {
+    'ro': os.getenv("RO_STOP_WORDS_FILE"),
+    'en': os.getenv("EN_STOP_WORDS_FILE"),
+    }
+
+DIR_KW_FASTTEXT = os.getenv("DIR_KW_FASTTEXT")
+
+XBOGUS_JS_FILE = os.getenv("XBOGUS_JS_FILE")
+
 DIR_DAILY_NEWS = { 
-    "France": 'data//daily_news_csv/France',
-    "US": "data/daily_news_csv/US"
+    'France': 'data//daily_news_csv/France',
+    'US': 'data/daily_news_csv/US',
+    'RO': 'data/daily_news_csv/RO'
 }
 MAIN_LOG_FILE = 'logs/error.log'
 
