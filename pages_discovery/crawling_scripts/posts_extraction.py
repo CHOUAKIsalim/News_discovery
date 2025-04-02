@@ -5,7 +5,8 @@ from datetime import datetime,timedelta
 from params import CROWDTANGLE_TOKEN, ERROR_TYPES, TIME_DELAY_CROWDTANGLE, DIR_KEYWORD_POSTS
 from database_scripts.utils import COLSET_CT_POST, COLSET_TIKTOK_POST
 from database_scripts.save_posts import save_posts
-from crawling_scripts.utils import attribute_posts_to_keywords
+from crawling_scripts.utils import attribute_posts_to_keywords, append_to_csv
+from scraping_scripts.get_bio_url import add_users_bio_url_to_posts
 import os
 import re
 import numpy as np
@@ -247,7 +248,8 @@ def search_posts_for_keyword_tiktok(terms,start_date,country,token,logger):
             search_id = json_response['data']['search_id']
         
     logger.info(f"Total amount of data collected for this batch of keywords: {len(all_posts)}")
-    return all_posts
+
+    return add_users_bio_url_to_posts(all_posts, logger)
 
 PLATFORMS = {
     "facebook": {
@@ -285,7 +287,7 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
                 item['posts'] = [posts[i] for i in posts_to_keywords[item['keyword']]]
                 item['nb_posts'] = len(item['posts'])
                 start_time = time.time()
-                posts_to_store.extend(format_posts(item, PLATFORMS[platform]['post_formatting'], logger))
+                posts_to_store.extend(format_posts(item, set(PLATFORMS[platform]['post_formatting']), logger))
                 save_keyword_posts_csv(item, country, platform, logger)
                 exe_time = time.time() - start_time
 
@@ -301,7 +303,7 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
             item['posts'] = posts
             item['nb_posts'] = len(posts)
             start_time = time.time()
-            posts_to_store.extend(format_posts(item, PLATFORMS[platform]['post_formatting'], logger))
+            posts_to_store.extend(format_posts(item, set(PLATFORMS[platform]['post_formatting']), logger))
             save_keyword_posts_csv(item, country, platform, logger)
             exe_time = time.time() - start_time
             if platform == "facebook":
@@ -319,7 +321,7 @@ def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform,
 
 
 def save_keyword_posts_csv(item, country, platform, logger):
-    posts = format_posts(item, PLATFORMS[platform]['post_formatting'], logger)
+    posts = format_posts(item, set(PLATFORMS[platform]['post_formatting']), logger)
     if len(posts) == 0:
         return 
     if not path.exists(DIR_KEYWORD_POSTS[country]):
@@ -327,5 +329,8 @@ def save_keyword_posts_csv(item, country, platform, logger):
     filename = path.join(DIR_KEYWORD_POSTS[country],item['hashed_keyword']+".csv")
     logger.info(f"Saving {len(posts)} posts for keyword {item['keyword']} to {filename}...")
     df = pd.DataFrame(posts)
-    df.to_csv(filename,index=None)
+    columns_csv = PLATFORMS[platform]['post_formatting'].copy()
+    columns_csv.extend(['bio_url','search_term','hashed_term'])
+    append_to_csv(df, columns_csv, filename)
+    #df.to_csv(filename,index=None)
     logger.info("Saved!")

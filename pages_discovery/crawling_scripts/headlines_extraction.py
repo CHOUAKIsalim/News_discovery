@@ -74,8 +74,11 @@ def get_kw_extractor(extractor,lang='ro'):
         fasttext.FastText.eprint = lambda *args,**kwargs: None
         if lang == 'ro':
             model = fasttext.load_model(DIR_KW_FASTTEXT + 'cc.ro.300.bin')
+        elif lang == 'en':
+            model = fasttext.load_model(DIR_KW_FASTTEXT + 'cc.en.300.bin')
         else:
-            model = fasttext.load_model(dir + 'cc.en.300.bin')
+            print("Language not supported")
+            return None
         return model
 
 def word_count(text):

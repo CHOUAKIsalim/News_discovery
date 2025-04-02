@@ -2,6 +2,8 @@ import fasttext
 import fasttext.util
 from sklearn.metrics.pairwise import cosine_similarity
 from params import DIR_KW_FASTTEXT
+from os import path
+import pandas as pd
 
 def get_bert_embedding(input_text_list):
     fasttext.FastText.eprint = lambda *args,**kwargs: None
@@ -30,3 +32,15 @@ def attribute_posts_to_keywords(posts, keywords, logger):
             posts_to_keywords[keywords[keyword_index]] = [i]
     
     return posts_to_keywords  
+
+def append_to_csv(df, desired_columns, filename):
+    if not path.exists(filename):
+        df_template = pd.DataFrame(columns=desired_columns)
+        df_template.to_csv(filename, index=False)
+    df = df.reindex(columns=desired_columns)
+    df_file = pd.read_csv(filename)
+    df = pd.concat([df_file, df], ignore_index=True)
+    df.drop_duplicates(subset=['id'], inplace=True)
+    #df.to_csv(filename[:-4]+'test.csv', mode='w', header=False, index=False)
+    df.stack().str.replace('\n', '\\n', regex=True).unstack()
+    df.to_csv(filename, mode='w', header=True, index=False, columns=desired_columns)

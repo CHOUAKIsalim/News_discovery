@@ -7,6 +7,7 @@ import argparse
 from params import ERROR_TYPES, DIR_DAILY_NEWS
 from crawling_scripts.headlines_extraction import get_daily_articles, extract_keywords, get_kw_extractor
 from crawling_scripts.posts_extraction import get_keywords_to_search, search_posts_for_all_keywords
+from crawling_scripts.utils import append_to_csv
 from database_scripts.save_headlines import save_news_headlines
 from database_scripts.save_search_terms import save_search_terms
 
@@ -24,9 +25,9 @@ def set_logger():
 def gather_daily_news(lang, country, start_date, extractor, logger):
 
     filename = f"headlines_{start_date}_{extractor}.csv"
-    # if path.exists(path.join(DIR_DAILY_NEWS[country],filename)):
-    #     logger.info(f"News for {start_date} already gathered")
-    #     return pd.read_csv(path.join(DIR_DAILY_NEWS[country],filename))
+    if path.exists(path.join(DIR_DAILY_NEWS[country],filename)):
+        logger.info(f"News for {start_date} already gathered")
+        return pd.read_csv(path.join(DIR_DAILY_NEWS[country],filename))
 
     df_news = pd.DataFrame()
 
@@ -39,25 +40,14 @@ def gather_daily_news(lang, country, start_date, extractor, logger):
     except Exception as e:
         logger.error("{}: {}".format(ERROR_TYPES.GET_DAILY_NEWS,str(e)))
 
-    # try:
-    #     df_news = extract_keywords(df_news, extractor=extractor, model=get_kw_extractor(extractor, lang=lang))
-
-    # except Exception as e:
-    #     logger.error("{}: {}".format(ERROR_TYPES.KEYWORD_EXTRACT,str(e)))
     df_news = extract_keywords(df_news, extractor=extractor, model=get_kw_extractor(extractor, lang=lang), lang=lang)
 
-    #try:
-    # df_news['uuid'] = [str(uuid.uuid4()) for _ in range(len(df_news.index))]
     if not path.exists(DIR_DAILY_NEWS[country]):
         makedirs(DIR_DAILY_NEWS[country])
-    df_news.to_csv(path.join(DIR_DAILY_NEWS[country],filename),index=None)
-
-    ## Save daily_news to DB
+    desired_columns = ['title','description','url','topic','publisher_name','publisher_website','published_date','keywords','first_keyword','second_keyword','hashed_first_kw','hashed_second_kw']
+    append_to_csv(df_news, desired_columns, path.join(DIR_DAILY_NEWS[country],filename))
+    
     save_news_headlines(df_news)
-
-    # except Exception as e:
-    #     print(str(e))
-    #     logger.error("{}: {}".format(ERROR_TYPES.DB_OPERATION,str(e)))
 
     return df_news
 
