@@ -32,5 +32,5 @@ This directory contains a Python project for the news page discovery described i
 - 'params.py': Contains the CrowdTangle token used for discovery, directories to store results, and other global variables.
 - `main.py`: The primary script for executing the news page discovery process. Accepts up to four optional arguments: language, country, start_date, and end_date for consideration in the discovery. Execute æs follow for discovering US-based pages posting in English.
 ```bash
-$ python main.py --lang en --country US
+$ python main.py --lang en --country US --platform tiktok --extractor yake
 ```
