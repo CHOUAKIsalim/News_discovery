@@ -14,7 +14,10 @@ DIR_KEYWORD_POSTS = {
     "RO": 'data/keyword_posts_csv/RO'
 }
 
-STOP_WORDS_FILE = os.getenv("STOP_WORDS_FILE")
+STOP_WORDS_FILE = {
+    'ro': os.getenv("RO_STOP_WORDS_FILE"),
+    'en': os.getenv("EN_STOP_WORDS_FILE"),
+    }
 
 DIR_KW_FASTTEXT = os.getenv("DIR_KW_FASTTEXT")
 

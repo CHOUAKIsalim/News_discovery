@@ -322,6 +322,8 @@ def save_keyword_posts_csv(item, country, platform, logger):
     posts = format_posts(item, PLATFORMS[platform]['post_formatting'], logger)
     if len(posts) == 0:
         return 
+    if not path.exists(DIR_KEYWORD_POSTS[country]):
+        os.makedirs(DIR_KEYWORD_POSTS[country])
     filename = path.join(DIR_KEYWORD_POSTS[country],item['hashed_keyword']+".csv")
     logger.info(f"Saving {len(posts)} posts for keyword {item['keyword']} to {filename}...")
     df = pd.DataFrame(posts)

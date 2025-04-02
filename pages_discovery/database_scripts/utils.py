@@ -30,7 +30,6 @@ def generate_unique_id(row):
 
 def create_engine():
     connection = sqlalchemy.create_engine(f'mysql+pymysql://{USER_NAME}:{PASSWORD}@{HOST_NAME}/{DB_NAME}?charset=utf8mb4').connect()
-    #connection = sqlalchemy.create_engine('sqlite:////home/benzenoug/News_discovery/pages_discovery/data/news_collection.db').connect()
     return connection
 
 def explode_and_save(df, id_column, value_column, table_name, database_connection):

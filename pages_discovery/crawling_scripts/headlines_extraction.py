@@ -90,9 +90,9 @@ def get_clean_text(strs):
     return remove_emoji(cl_text)
 
 
-def get_keywords(text,extractor='yake',kw_model=None,n_gram=5,top_n=4):
+def get_keywords(text,extractor='yake',kw_model=None,lang='ro',n_gram=5,top_n=4):
     ctext = get_clean_text(text)
-    with open(STOP_WORDS_FILE, 'r') as f:
+    with open(STOP_WORDS_FILE[lang], 'r') as f:
         stop_words = f.read().splitlines()
     if extractor == 'yake':
         kw_extractor = yake.KeywordExtractor(top=top_n, n=n_gram, stopwords=stop_words)
@@ -111,9 +111,9 @@ def get_keywords(text,extractor='yake',kw_model=None,n_gram=5,top_n=4):
     ls_keywords = [kw[0] for kw in fl_keywords]
     return ls_keywords
 
-def get_article_keyword(title, extractor='yake',model=None):
+def get_article_keyword(title, extractor='yake',model=None, lang='ro'):
     try:
-        keywords = get_keywords(title, extractor=extractor, kw_model=model)
+        keywords = get_keywords(title, extractor=extractor, kw_model=model, lang=lang)
         filtered_kw = list(filter(lambda w: word_count(w)>=2, keywords))
         return ",".join(filtered_kw)
     except Exception as e:
@@ -130,9 +130,9 @@ def get_keyword_at(keywords, ind = 0):
     
 
 
-def extract_keywords(df_news, extractor='yake', model=None):
+def extract_keywords(df_news, extractor='yake', model=None, lang="ro"):
 
-    df_news['keywords'] = df_news.title.apply(lambda x:get_article_keyword(x, extractor=extractor, model=model))
+    df_news['keywords'] = df_news.title.apply(lambda x:get_article_keyword(x, extractor=extractor, model=model, lang=lang))
     df_news['first_keyword'] = df_news.keywords.apply(lambda x:get_keyword_at(x,0))
     df_news['second_keyword'] = df_news.keywords.apply(lambda x:get_keyword_at(x,1))
     df_news['hashed_first_kw'] = df_news.first_keyword.apply(lambda x: get_hash_string(x))

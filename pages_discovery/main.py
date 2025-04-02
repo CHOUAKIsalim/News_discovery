@@ -1,6 +1,6 @@
 import logging, uuid, sys, time
 import pandas as pd
-from os import path
+from os import path, makedirs
 from datetime import datetime, timedelta
 import argparse
 
@@ -44,10 +44,12 @@ def gather_daily_news(lang, country, start_date, extractor, logger):
 
     # except Exception as e:
     #     logger.error("{}: {}".format(ERROR_TYPES.KEYWORD_EXTRACT,str(e)))
-    df_news = extract_keywords(df_news, extractor=extractor, model=get_kw_extractor(extractor, lang=lang))
+    df_news = extract_keywords(df_news, extractor=extractor, model=get_kw_extractor(extractor, lang=lang), lang=lang)
 
     #try:
     # df_news['uuid'] = [str(uuid.uuid4()) for _ in range(len(df_news.index))]
+    if not path.exists(DIR_DAILY_NEWS[country]):
+        makedirs(DIR_DAILY_NEWS[country])
     df_news.to_csv(path.join(DIR_DAILY_NEWS[country],filename),index=None)
 
     ## Save daily_news to DB
