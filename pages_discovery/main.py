@@ -16,10 +16,10 @@ logger = None
 
 DAILY = None
 
-def set_logger():
+def set_logger(start_date, country, lang, platform, extractor):
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-    logging.basicConfig(filename='logs/error.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(message)s')
+    logging.basicConfig(filename=f'logs/{start_date}_{country}_{lang}_{platform}_{extractor}.log', level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s %(message)s')
     return logging.getLogger(__name__)
 
 def gather_daily_news(lang, country, start_date, extractor, logger):
@@ -77,8 +77,6 @@ def daily_job(lang, country, start_date, platform, extractor, logger):
 
 if __name__ == "__main__":
 
-    logger = set_logger()
-
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--lang', type=str, default='en', help='Language of the news')
     parser.add_argument('--country', type=str, default='US', help='Country of the news')
@@ -95,6 +93,7 @@ if __name__ == "__main__":
     nb_days = args.nb_days
     platform = args.platform
     extractor = args.extractor 
+    logger = set_logger(start_date, country, lang, platform, extractor)
     logger.info(f"Starting daily job for {nb_days} days from {start_date} in {country} ({lang}) on {platform} using {extractor}")
 
     for _ in range(nb_days):
