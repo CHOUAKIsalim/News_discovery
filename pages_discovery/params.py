@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv, find_dotenv
-
+from datetime import datetime
 
 load_dotenv(find_dotenv())
 
@@ -11,7 +11,7 @@ CROWDTANGLE_TOKEN = os.getenv("CROWDTANGLE_TOKEN")
 DIR_KEYWORD_POSTS = {
     "France": 'data/keyword_posts_csv/France',
     "US": 'data/keyword_posts_csv/US',
-    "RO": 'data/keyword_posts_csv/RO'
+    "RO": f'data/keyword_posts_csv/RO/{datetime.today().strftime('%Y-%m-%d')}'
 }
 
 STOP_WORDS_FILE = {
@@ -26,7 +26,7 @@ XBOGUS_JS_FILE = os.getenv("XBOGUS_JS_FILE")
 DIR_DAILY_NEWS = { 
     'France': 'data//daily_news_csv/France',
     'US': 'data/daily_news_csv/US',
-    'RO': 'data/daily_news_csv/RO'
+    'RO': f'data/daily_news_csv/RO/{datetime.today().strftime('%Y-%m-%d')}'
 }
 MAIN_LOG_FILE = 'logs/error.log'
 

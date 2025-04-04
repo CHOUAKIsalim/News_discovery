@@ -249,7 +249,7 @@ def search_posts_for_keyword_tiktok(terms,start_date,country,token,logger):
         
     logger.info(f"Total amount of data collected for this batch of keywords: {len(all_posts)}")
 
-    return add_users_bio_url_to_posts(all_posts, logger)
+    return all_posts
 
 PLATFORMS = {
     "facebook": {
@@ -265,19 +265,22 @@ PLATFORMS = {
 def search_posts_for_all_keywords(dct_searchterm, start_date, country, platform, logger):
 
     posts_to_store = []
+    keywords_seen = set()
 
     if platform == "tiktok":
         keywords_list = [item['keyword'] for item in dct_searchterm if item['keyword'] is not np.nan]
         token = get_tiktok_access_token()
 
-        batch_size = 20
+        batch_size = 49
         posts = []
         for offset in range(0, len(keywords_list), batch_size):
             batch_keywords = keywords_list[offset:offset + batch_size]
+            batch_keywords = [kw for kw in batch_keywords if kw not in keywords_seen]
+            keywords_seen.update(batch_keywords)
             logger.info(f"Searching posts for keywords: {batch_keywords}")
             posts = search_posts_for_keyword_tiktok(batch_keywords, start_date, country, token, logger)
             if len(posts) == 0:
-                logger.info(f"No posts found for keywords: {batch_keywords}")
+                logger.info(f"No posts found for these keywords")
                 continue
             posts_to_keywords = attribute_posts_to_keywords(posts, batch_keywords, logger)
 

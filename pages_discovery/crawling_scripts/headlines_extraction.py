@@ -33,7 +33,7 @@ def get_categorized_news(lang, country, start_date, period='1d'):
     TOPICS = ['WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE', 'HEALTH']
 #    start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
 #    start_date_tuple = (start_date_datetime.year, start_date_datetime.month, start_date_datetime.day)
-    news_agent = GNews(language=lang, country=country, period=period,max_results=500)
+    news_agent = GNews(language=lang, country=country, start_date=start_date, period=period,max_results=500)
     ls_news = []
     for topic in TOPICS:
         topic_news = news_agent.get_news_by_topic(topic)
@@ -93,7 +93,7 @@ def get_clean_text(strs):
     return remove_emoji(cl_text)
 
 
-def get_keywords(text,extractor='yake',kw_model=None,lang='ro',n_gram=5,top_n=4):
+def get_keywords(text,extractor='yake',kw_model=None,lang='ro',n_gram=3,top_n=20):
     ctext = get_clean_text(text)
     with open(STOP_WORDS_FILE[lang], 'r') as f:
         stop_words = f.read().splitlines()
@@ -117,7 +117,11 @@ def get_keywords(text,extractor='yake',kw_model=None,lang='ro',n_gram=5,top_n=4)
 def get_article_keyword(title, extractor='yake',model=None, lang='ro'):
     try:
         keywords = get_keywords(title, extractor=extractor, kw_model=model, lang=lang)
-        filtered_kw = list(filter(lambda w: word_count(w)>=2, keywords))
+        filtered_kw = list(filter(lambda w: word_count(w)>=2, keywords))[:2]
+        if len(filtered_kw) == 1:
+                filtered_kw.append(list(filter(lambda w: word_count(w)==1, keywords))[0])
+        elif len(filtered_kw) == 0:
+            filtered_kw = keywords[:2]
         return ",".join(filtered_kw)
     except Exception as e:
         print(e)

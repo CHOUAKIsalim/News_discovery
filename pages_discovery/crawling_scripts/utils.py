@@ -40,7 +40,10 @@ def append_to_csv(df, desired_columns, filename):
     df = df.reindex(columns=desired_columns)
     df_file = pd.read_csv(filename)
     df = pd.concat([df_file, df], ignore_index=True)
-    df.drop_duplicates(subset=['id'], inplace=True)
+    try:
+        df.drop_duplicates(subset=['id'], inplace=True)
+    except KeyError:
+        True == True
     #df.to_csv(filename[:-4]+'test.csv', mode='w', header=False, index=False)
     df.stack().str.replace('\n', '\\n', regex=True).unstack()
     df.to_csv(filename, mode='w', header=True, index=False, columns=desired_columns)

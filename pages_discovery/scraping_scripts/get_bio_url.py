@@ -81,7 +81,7 @@ def get_bio_url(uniqueId, logger):
             logger.error(f"Key not found in the response, error is: {e} for uniqueId: {uniqueId}")
             return None
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode JSON response, error is: {e} for uniqueId: {uniqueId}")
+            logger.error(f"Failed to decode JSON response, error is: {e} for uniqueId: {uniqueId} \n and response is: {response.text}")
             retry += 1
             time.sleep(5)
         except requests.exceptions.RequestException as e:
