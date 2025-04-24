@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from gnews import GNews
 from hashlib import sha256
 import yake
@@ -10,6 +10,7 @@ from adaptkeybert import KeyBERT
 import os
 from params import STOP_WORDS_FILE, DIR_KW_FASTTEXT
 
+
 def remove_source(title):
     ind = title.rfind('-')
     return title[0:ind].strip()
@@ -19,32 +20,53 @@ def format_pubdate(date_str,ftm = "%a, %d %b %Y %H:%M:%S %Z"):
     d = datetime.strptime(date_str,ftm)
     return d
 
+def compute_end_date(start_date, period):
+    period_mapping = {
+        '1d': 1,
+        '7d': 7,
+        '30d': 30
+    }
+    days = period_mapping.get(period, 1)
+    start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+    end_date_datetime = start_date_datetime + timedelta(days=days)
+    return end_date_datetime.strftime("%Y-%m-%d")
 
 def get_top_news(lang, country, start_date, period='1d'):
-   # start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-   # start_date_tuple = (start_date_datetime.year, start_date_datetime.month, start_date_datetime.day)
-
-    news_agent = GNews(language=lang, country = country, period=period, max_results=500)   
+    start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+    start_date_tuple = (start_date_datetime.year, start_date_datetime.month, start_date_datetime.day)
+    end_date = compute_end_date(start_date, period)
+    end_date_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+    end_date_tuple = (end_date_datetime.year, end_date_datetime.month, end_date_datetime.day)
+    news_agent = GNews(language=lang, country=country, max_results=100, start_date=start_date_tuple, end_date=end_date_tuple) 
     top_news = news_agent.get_top_news()    
     return top_news
 
-
 def get_categorized_news(lang, country, start_date, period='1d'):
-    TOPICS = ['WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE', 'HEALTH']
-#    start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-#    start_date_tuple = (start_date_datetime.year, start_date_datetime.month, start_date_datetime.day)
-    news_agent = GNews(language=lang, country=country, start_date=start_date, period=period,max_results=500)
+    TOPICS = ["WORLD", "NATION", "BUSINESS", "TECHNOLOGY", "ENTERTAINMENT", "SPORTS", "SCIENCE", "HEALTH", "POLITICS", "CELEBRITIES", "TV", "MUSIC", "MOVIES", "THEATER", "SOCCER", "CYCLING", "MOTOR SPORTS", "TENNIS", "COMBAT SPORTS", "BASKETBALL", "BASEBALL", "FOOTBALL", "SPORTS BETTING", "WATER SPORTS", "HOCKEY", "GOLF", "CRICKET", "RUGBY", "ECONOMY", "PERSONAL FINANCE", "FINANCE", "DIGITAL CURRENCIES", "MOBILE", "ENERGY", "GAMING", "INTERNET SECURITY", "GADGETS", "VIRTUAL REALITY", "ROBOTICS", "NUTRITION", "PUBLIC HEALTH", "MENTAL HEALTH", "MEDICINE", "SPACE", "WILDLIFE", "ENVIRONMENT", "NEUROSCIENCE", "PHYSICS", "GEOLOGY", "PALEONTOLOGY", "SOCIAL SCIENCES", "EDUCATION", "JOBS", "ONLINE EDUCATION", "HIGHER EDUCATION", "VEHICLES", "ARTS-DESIGN", "BEAUTY", "FOOD", "TRAVEL", "SHOPPING", "HOME", "OUTDOORS", "FASHION"]
+
+    start_date_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+    start_date_tuple = (start_date_datetime.year, start_date_datetime.month, start_date_datetime.day)
+    end_date = compute_end_date(start_date, period)
+    end_date_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+    end_date_tuple = (end_date_datetime.year, end_date_datetime.month, end_date_datetime.day)
+    news_agent = GNews(language=lang, country=country, max_results=100, start_date=start_date_tuple, end_date=end_date_tuple)
     ls_news = []
+    seen_urls = set()
     for topic in TOPICS:
-        topic_news = news_agent.get_news_by_topic(topic)
+        topic_news = news_agent.get_news(topic)
         for news in topic_news:
+            if news['url'] in seen_urls:
+                topic_news.remove(news)
+                continue
             news['topic'] = topic
+            seen_urls.add(news['url'])
         ls_news.extend(topic_news)
     return ls_news
 
+
 def get_daily_articles(lang, country, start_date, period='1d'):
 
-    headline_news = get_top_news(lang=lang, country=country, start_date=start_date, period=period)
+    #headline_news = get_top_news(lang=lang, country=country, start_date=start_date, period=period)
     headline_news = []
     categorized_news = get_categorized_news(lang=lang, country=country, start_date=start_date, period=period)
     headline_news.extend(categorized_news)
@@ -59,7 +81,7 @@ def get_daily_articles(lang, country, start_date, period='1d'):
         except Exception as e:
             print(e)
     df_news = pd.DataFrame(headline_news)
-    df_news = df_news.drop_duplicates(subset='title')
+    df_news = df_news.drop_duplicates(subset=['title', 'publisher_name'])
     return df_news
 
 ###########################################################################

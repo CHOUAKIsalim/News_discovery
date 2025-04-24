@@ -5,6 +5,7 @@ import execjs
 import random
 from params import XBOGUS_JS_FILE
 import time
+import re
 
 
 def get_bio_url(uniqueId, logger):
@@ -102,3 +103,12 @@ def add_users_bio_url_to_posts(posts, logger):
         post['bioLink'] = get_bio_url(uniqueId, logger)
     logger.info("Bio URL added to posts.")
     return posts
+
+def extract_urls_from_text(text):
+    # Regular expression to match URLs including those starting with www
+    url_pattern = r'(https?://[^\s]+|www\.[^\s]+)'
+    urls = re.findall(url_pattern, text)
+    
+    # Extract domains from the URLs
+    domains = [re.sub(r'^https?://|www\.', '', url).split('/')[0] for url in urls]
+    return [{'url': element[0], 'domain': element[1]} for element in zip(urls, domains)]

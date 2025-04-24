@@ -80,7 +80,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--lang', type=str, default='en', help='Language of the news')
     parser.add_argument('--country', type=str, default='US', help='Country of the news')
-    parser.add_argument('--start_date', type=str, default=(datetime.today() - timedelta(days=7)).strftime('%Y-%m-%d'), help='Start date for the news in YYYY-MM-DD format')
+    parser.add_argument('--start_date', type=str, default=(datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d'), help='Start date for the news in YYYY-MM-DD format')
     parser.add_argument('--nb_days', type=int, default=1, help='Number of days to gather news for')
     parser.add_argument('--platform', type=str, default='facebook', help='Platform to search posts on (e.g., facebook, tiktok)')
     parser.add_argument('--extractor', type=str, default='yake', help='Keyword extractor to use (e.g., yake, keybert, fasttext)')

@@ -4,9 +4,9 @@ import os
 
 
 def job():
-    os.system("python3 main.py --lang ro --country RO --platform tiktok --extractor keybert --start_date 2025-03-28 --nb_days 7")
+    os.system("python3 main.py --lang ro --country RO --platform tiktok --extractor keybert")
 
-schedule.every().day.at("09:36").do(job)
+schedule.every().day.at("06:00").do(job)
 
 while True:
     schedule.run_pending()
